@@ -1,0 +1,57 @@
+{
+    "mixtral": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "apiKey": "GROQ_API_KEY",
+        "model": "mixtral-8x7b-32768"
+    },
+    "llama-2": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama2-70b-4096",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "llama3-8b-8192": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama3-8b-8192",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "llama3-70b-8192": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama3-70b-8192",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "llama3.2-90b": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama-3.2-90b-text-preview",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "llama3.1-70b-versatile": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama-3.1-70b-versatile",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "llama3.1-8b-instant": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama-3.1-8b-instant",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "gemma": {
+        "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "gemma-7b-it",
+        "apiKey": "GROQ_API_KEY"
+    },
+    "openai": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4o",
+        "apiKey": "OPENAI_API_KEY"
+    },
+    "gpt3.5": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-3.5-turbo",
+        "apiKey": "OPENAI_API_KEY"
+    },
+    "gpt4": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4",
+        "apiKey": "OPENAI_API_KEY"
+    }
+}
