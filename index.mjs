@@ -130,68 +130,73 @@ async function handleUserInput(message) {
       '**Conversation:**';
     const behaviorPrompt = profiles[activeProfile].behaviorPrompt;
 
-    let data;
-    if (models[activeModel].model.startsWith('gpt')) {
-      data = {
-        model: models[activeModel].model,
-        prompt: `${recentConversationPrompt}\n${behaviorPrompt}\n\n${message.content}`,
-        temperature: 1,
-        max_tokens: 2048
-      };
-    } else {
-      data = {
-        model: models[activeModel].model,
-        messages: [
-          { role: "system", content: recentConversationPrompt },
-          { role: "system", content: behaviorPrompt },
-          { role: "user", content: message.content }
-        ],
-        temperature: 1
-      };
-    }
+    let data = {
+      model: models[activeModel].model,
+      messages: [
+        { role: "system", content: recentConversationPrompt },
+        { role: "system", content: behaviorPrompt },
+        { role: "user", content: message.content }
+      ],
+      temperature: 1
+    };
 
     const processingMessage = await message.reply("Processing...");
 
-    let response;
-    if (data.model.startsWith('gpt')) {
-      response = await openai.createCompletion({
-        model: data.model,
-        prompt: data.prompt,
-        temperature: data.temperature,
-        max_tokens: data.max_tokens,
-        presence_penalty: 0,
-        frequency_penalty: 0,
-        stop: ['."', '\n\n']
-      });
-    } else {
-      response = await axios.post(models[activeModel].endpoint, data, {
+    if (models[activeModel].endpoint) {
+      let response = await axios.post(models[activeModel].endpoint, data, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env[models[activeModel].apiKey]}`
         }
       });
-    }
+      let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
+      generatedText = sanitizeMessage(generatedText);
 
-    let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
+      if (generatedText.length > 2000) {
+        const messageChunks = generatedText.match(/(.|[\r\n]){1,2000}/g);
 
-    generatedText = sanitizeMessage(generatedText);
-
-    if (generatedText.length > 2000) {
-      const messageChunks = generatedText.match(/(.|[\r\n]){1,2000}/g);
-
-      for (let chunk of messageChunks) {
+        for (let chunk of messageChunks) {
+          const embed = new EmbedBuilder()
+            .setTitle('Response')
+            .setDescription(chunk)
+            .setColor(0x00FF00);
+          await processingMessage.edit({ embeds: [embed] });
+        }
+      } else {
         const embed = new EmbedBuilder()
           .setTitle('Response')
-          .setDescription(chunk)
+          .setDescription(generatedText)
           .setColor(0x00FF00);
         await processingMessage.edit({ embeds: [embed] });
       }
     } else {
-      const embed = new EmbedBuilder()
-        .setTitle('Response')
-        .setDescription(generatedText)
-        .setColor(0x00FF00);
-      await processingMessage.edit({ embeds: [embed] });
+      data = {
+        model: data.model,
+        prompt: `${recentConversationPrompt}\n${behaviorPrompt}\n\n${message.content}`,
+        temperature: data.temperature,
+        max_tokens: 2048
+      };
+      let response = await openai.chat.completions.create(data);
+      let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
+      generatedText = sanitizeMessage(generatedText);
+
+      if (generatedText.length > 2000) {
+        const messageChunks = generatedText.match(/(.|[\r\n]){1,2000}/g);
+
+        for (let chunk of messageChunks) {
+          const embed = new EmbedBuilder()
+            .setTitle('Response')
+            .setDescription(chunk)
+            .setColor(0x00FF00);
+          await processingMessage.edit({ embeds: [embed] });
+        }
+      } else {
+        const embed = new EmbedBuilder()
+          .setTitle('Response')
+          .setDescription(generatedText)
+          .setColor(0x00FF00);
+        await processingMessage.edit({ embeds: [embed] });
+      }
     }
 
   } catch (error) {
@@ -269,55 +274,48 @@ const commands = [
           '**Conversation:**';
         const behaviorPrompt = profiles[activeProfile].behaviorPrompt;
 
-        let data;
-        if (models[activeModel].model.startsWith('gpt')) {
-          data = {
-            model: models[activeModel].model,
-            prompt: `${recentConversationPrompt}\n${behaviorPrompt}\n\n${question}`,
-            temperature: 1,
-            max_tokens: 2048
-          };
-        } else {
-          data = {
-            model: models[activeModel].model,
-            messages: [
-              { role: "system", content: recentConversationPrompt },
-              { role: "system", content: behaviorPrompt },
-              { role: "user", content: question }
-            ],
-            temperature: 1
-          };
-        }
+        let data = {
+          model: models[activeModel].model,
+          messages: [
+            { role: "system", content: recentConversationPrompt },
+            { role: "system", content: behaviorPrompt },
+            { role: "user", content: question }
+          ],
+          temperature: 1
+        };
 
-        let response;
-        if (data.model.startsWith('gpt')) {
-          response = await openai.createCompletion({
-            model: data.model,
-            prompt: data.prompt,
-            temperature: data.temperature,
-            max_tokens: data.max_tokens,
-            presence_penalty: 0,
-            frequency_penalty: 0,
-            stop: ['."', '\n\n']
-          });
-        } else {
-          response = await axios.post(models[activeModel].endpoint, data, {
+        if (models[activeModel].endpoint) {
+          let response = await axios.post(models[activeModel].endpoint, data, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${process.env[models[activeModel].apiKey]}`
             }
           });
+          let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
+          generatedText = sanitizeMessage(generatedText);
+
+          const embed = new EmbedBuilder()
+            .setTitle('Response')
+            .setDescription(generatedText)
+            .setColor(0x00FF00);
+          await interaction.editReply({ embeds: [embed] });
+        } else {
+          data = {
+            model: data.model,
+            prompt: `${recentConversationPrompt}\n${behaviorPrompt}\n\n${question}`,
+            temperature: data.temperature,
+            max_tokens: 2048
+          };
+          let response = await openai.chat.completions.create(data);
+          let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
+          generatedText = sanitizeMessage(generatedText);
+
+          const embed = new EmbedBuilder()
+            .setTitle('Response')
+            .setDescription(generatedText)
+            .setColor(0x00FF00);
+          await interaction.editReply({ embeds: [embed] });
         }
-
-        let generatedText = response.data.choices[0].message.content.trim() || response.data.choices[0].text.trim();
-
-        generatedText = sanitizeMessage(generatedText);
-
-        const embed = new EmbedBuilder()
-          .setTitle('Response')
-          .setDescription(generatedText)
-          .setColor(0x00FF00);
-        await interaction.editReply({ embeds: [embed] });
       } catch (error) {
         console.error('Error generating response:', error);
         const embed = new EmbedBuilder()
